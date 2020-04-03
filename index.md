@@ -145,7 +145,7 @@ grid.arrange(ch1,ch2, ncol=2)
 
 ![](index_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
 
-Lets check how education level is distributed across genders
+### Lets check how education level is distributed across genders
 
 
 ```r
@@ -166,7 +166,7 @@ LFS %>% group_by(Edu_Yrs, Gendar) %>% summarise(count=n()) %>% mutate(percent = 
 
 ![](index_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
-Checking the distribution of occupation level
+### Checking the distribution of occupation level
 
 ```r
 LFS %>% group_by(occupation) %>% summarise(count=n()) %>% mutate(percent = (count/sum(count))*100)
@@ -193,6 +193,7 @@ LFS %>% group_by(occupation) %>% summarise(count=n()) %>% mutate(percent = (coun
 ## 10 legal, social and cultural professional                 588  0.216 
 ## # ... with 30 more rows
 ```
+
 ### Checking the distribution of variables
 Once we have selected the required variables, we can explore the selected variables by visualising and generating summary statistics. In the following chunk EDA, we have grouped data by Marital status and explored how many belong to each type of marital status
 
@@ -210,7 +211,7 @@ LFS %>% group_by(Marital_Status) %>% summarise(count=n()) %>% mutate(percent = (
 ![](index_files/figure-html/EDA-1.png)<!-- -->
 
 
-Checking the distribution of yearly earnings (note that this field has very few observations)
+###Checking the distribution of yearly earnings (note that this field has very few observations)
 
 
 ```r
@@ -224,22 +225,67 @@ summary(LFS$earning_last_year)
 
 
 ```r
-LFS %>% select(earning_last_year) %>% na.omit() %>% ggplot(aes(x=earning_last_year)) + geom_histogram(bins = 100, color="blue") +  xlab("Earnings last year") + ylab("No of Individuals") 
+LFS %>% select(last_month_earning_cash) %>% na.omit() %>% ggplot(aes(x=last_month_earning_cash)) + geom_histogram(bins = 100, color="blue") +  xlab("Earnings last year") + ylab("No of Individuals") 
 ```
 
 ![](index_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+### Histogram of log of monthly earnings
 
-We check last year yearnings against education level and gendar - note the concentration of reds to the left of each grouping.
+
+One of the objectives of log transformation is that skewed data may become log normal. So instead of taking monthly earning distribution as given above, I am plotting histogram of log(monthly earnings). We can observe than log transformation of the data has made the distribution symmetrical.
 
 
 ```r
-LFS %>% select(earning_last_year, Edu_Yrs, Gendar) %>% na.omit() %>% ggplot() + geom_point(aes(x=earning_last_year, y=Edu_Yrs, color=Gendar), alpha = .2) +    scale_color_manual(values = c("Male" = "blue", "Female" = "red")) +
-  xlab("Last Year's earning") + ylab("Education Level") 
+LFS %>% select(last_month_earning_cash) %>% na.omit() %>% ggplot(aes(x=log(last_month_earning_cash))) + geom_histogram(bins = 100, color="blue") +  xlab("Earnings last year") + ylab("No of Individuals") 
+```
+
+```
+## Warning: Removed 17 rows containing non-finite values (stat_bin).
 ```
 
 ![](index_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
-Regressing Earnings on Years of Education, Province, Ae, Gendar and Occupation
+
+
+
+
+
+
+## Differences between earnings by gender for various levels of education
+
+It is important to note that in the LFS, education is measured at levels and not in years. We check last year yearnings against education level and gendar - note the concentration of reds to the left of each grouping.
+
+
+```r
+LFS %>% select(last_month_earning_cash, education_level, Gendar) %>% na.omit() %>% ggplot() + geom_point(aes(x=education_level,y=last_month_earning_cash,color=Gendar), alpha = .2) +    scale_color_manual(values = c("Male" = "blue", "Female" = "red")) +
+  ylab("Monthly earnings") + xlab("Education Level")+coord_flip()
+```
+
+![](index_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+## Removing outliers 
+
+Although removing outliers is not a good idea unless there are some editing erros. But for the purpose of finding out differences between male and female earnings, I am removing some large values and we notice how earnings between male and female. I have set y-axis maximum value for monthly earning to Rs.150,000/. 33 observations will be removed. On can notice that red dots are in general lower than blue dots which implies that for each education level, it seems women earn less than men. __Good visualization__ helps to ask good question for which hypothesis can be formulated and explored through using various models.
+
+
+
+
+```r
+LFS %>% select(last_month_earning_cash, education_level, Gendar) %>% na.omit() %>% ggplot() + geom_point(aes(x=education_level,y=last_month_earning_cash,color=Gendar), alpha = .2) +    scale_color_manual(values = c("Male" = "blue", "Female" = "red")) +
+  ylab("Monthly earnings") + xlab("Education Level")+coord_flip()+ylim(0,150000)
+```
+
+```
+## Warning: Removed 33 rows containing missing values (geom_point).
+```
+
+![](index_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+
+## Regression Analysis
+
+In this section we find relationship between monthly earnings by including some additional variables. Regression results are given as follows: 
+
 
 
 ```r
